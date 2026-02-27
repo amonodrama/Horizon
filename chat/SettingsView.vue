@@ -335,6 +335,19 @@
         />
       </div>
       <div class="mb-3 p-2">
+        <label class="control-label" for="fontType">{{
+          l('settings.fontType')
+        }}</label>
+        <input
+          id="fontType"
+          type="text"
+          class="form-control"
+          v-model="fontType"
+          spellcheck="false"
+          autocomplete="off"
+        />
+      </div>
+      <div class="mb-3 p-2">
         <label class="control-label" for="risingCharacterTheme">
           {{ l('settings.overrideCharacterTheme') }}
           <select
@@ -1174,6 +1187,7 @@
     logMessages!: boolean;
     logAds!: boolean;
     fontSize!: string;
+    fontType!: string;
     showNeedsReply!: boolean;
     enterSend!: boolean;
     colorBookmarks!: boolean;
@@ -1240,6 +1254,7 @@
       this.logMessages = settings.logMessages;
       this.logAds = settings.logAds;
       this.fontSize = settings.fontSize.toString();
+      this.fontType = (settings as any).fontType || '';
       this.showNeedsReply = settings.showNeedsReply;
       this.enterSend = settings.enterSend;
       this.colorBookmarks = settings.colorBookmarks;
@@ -1464,7 +1479,8 @@
         risingCharacterTheme:
           this.risingCharacterTheme != 'undefined'
             ? this.risingCharacterTheme
-            : undefined
+            : undefined,
+        fontType: this.fontType.trim()
       };
       console.log('SETTINGS', minAge, maxAge, core.state.settings);
 

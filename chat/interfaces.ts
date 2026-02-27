@@ -327,6 +327,7 @@ export namespace Settings {
 
     readonly risingCharacterTheme: string | undefined;
     readonly soundTheme: string;
+    readonly fontType: string;
   }
 }
 

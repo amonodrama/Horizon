@@ -422,6 +422,7 @@
       this.keydownListener = (e: KeyboardEvent) => this.onKeyDown(e);
       window.addEventListener('keydown', this.keydownListener);
       this.setFontSize(core.state.settings.fontSize);
+      this.setFontType(core.state.settings.fontType);
 
       this.mouseButtonListener = (e: MouseEvent) => this.onMouseButton(e);
       window.addEventListener('mouseup', this.mouseButtonListener);
@@ -538,6 +539,14 @@
         },
         value => {
           this.setFontSize(value);
+        }
+      );
+      core.watch<string>(
+        function (): string {
+          return this.state.settings.fontType;
+        },
+        value => {
+          this.setFontType(value);
         }
       );
 
@@ -746,6 +755,24 @@
       );
       sheet.insertRule(
         `.form-control, select.form-control { line-height: 1.428571429 }`,
+        sheet.cssRules.length
+      );
+    }
+
+    setFontType(fontType: string): void {
+      let overrideEl = <HTMLStyleElement | null>(
+        document.getElementById('overrideFontType')
+      );
+      if (overrideEl !== null) document.body.removeChild(overrideEl);
+      if (!fontType || !fontType.trim()) return;
+      overrideEl = document.createElement('style');
+      overrideEl.id = 'overrideFontType';
+      document.body.appendChild(overrideEl);
+      const sheet = <CSSStyleSheet>overrideEl.sheet;
+      const emojiStack =
+        "system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', 'Liberation Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', OpenMoji";
+      sheet.insertRule(
+        `body { font-family: ${fontType.trim()}, ${emojiStack}; }`,
         sheet.cssRules.length
       );
     }
