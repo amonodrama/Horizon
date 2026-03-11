@@ -14,17 +14,32 @@ interface SavedWindowState {
   maximized: boolean;
 }
 
-function mapToScreen(state: SavedWindowState): SavedWindowState {
+function getTargetDisplayFromArgs(): Electron.Display | undefined {
+  const arg = process.argv.find(a => /^-screen:\d+$/.test(a));
+  if (!arg) return undefined;
+  const index = parseInt(arg.split(':')[1], 10);
+  const displays = screen.getAllDisplays();
+  return displays[index] ?? undefined;
+}
+
+function mapToScreen(
+  state: SavedWindowState,
+  forceDisplay?: Electron.Display
+): SavedWindowState {
   let x = state.x !== undefined ? state.x : 0;
   let y = state.y !== undefined ? state.y : 0;
   let { width, height } = state;
   const primaryDisplay = screen.getPrimaryDisplay();
-  const targetDisplay = screen.getDisplayMatching({
-    x,
-    y,
-    height: state.height,
-    width: state.width
-  });
+
+  const targetDisplay =
+    forceDisplay ??
+    screen.getDisplayMatching({
+      x,
+      y,
+      height: state.height,
+      width: state.width
+    });
+
   if (
     primaryDisplay.scaleFactor !== 1 &&
     targetDisplay.id !== primaryDisplay.id
@@ -32,6 +47,7 @@ function mapToScreen(state: SavedWindowState): SavedWindowState {
     x /= primaryDisplay.scaleFactor;
     y /= primaryDisplay.scaleFactor;
   }
+
   const workArea = targetDisplay.workArea;
   width = Math.min(width, workArea.width);
   height = Math.min(height, workArea.height);
@@ -40,8 +56,8 @@ function mapToScreen(state: SavedWindowState): SavedWindowState {
 
   state.width = width;
   state.height = height;
-  state.x = x !== 0 ? x : undefined;
-  state.y = y !== 0 ? y : undefined;
+  state.x = x;
+  state.y = y;
   return state;
 }
 
@@ -59,17 +75,26 @@ export function setSavedWindowState(window: Electron.BrowserWindow): void {
 }
 
 export function getSavedWindowState(): SavedWindowState {
-  const defaultState = {
-    height: 768,
-    maximized: false,
-    width: 1024
-  };
+  const forcedDisplay = getTargetDisplayFromArgs();
+
+  const defaultState: SavedWindowState = (() => {
+    const display = forcedDisplay ?? screen.getPrimaryDisplay();
+    const { x, y, width, height } = display.workArea;
+    return {
+      height,
+      width,
+      maximized: false,
+      x,
+      y
+    };
+  })();
+
   if (!fs.existsSync(windowStatePath)) return defaultState;
   try {
     let savedState = <SavedWindowState>(
       JSON.parse(fs.readFileSync(windowStatePath, 'utf-8'))
     );
-    savedState = mapToScreen(savedState);
+    savedState = mapToScreen(savedState, forcedDisplay);
     return savedState;
   } catch (e) {
     log.error(e);
